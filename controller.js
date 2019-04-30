@@ -1,3 +1,7 @@
+const {
+	validationResult
+} = require('express-validator/check');
+
 // GET          Fetch all locations
 // GET          Fetch by genre
 exports.fetchLocations = (req, res) => {
@@ -8,6 +12,12 @@ exports.fetchLocations = (req, res) => {
 
 // POST         Create a new location
 exports.createNewLocation = (req, res) => {
+	const errors = validationResult(req);
+	if (!errors.isEmpty()) {
+		return res.status(422).json({
+			errors: errors.array()
+		});
+	}
 	res.status(201).json({
 		message: 'Location created successfuly'
 	})
