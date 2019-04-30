@@ -1,0 +1,28 @@
+{
+  "name": "populatio",
+  "version": "1.0.0",
+  "description": "Manage your population easily",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/j33n/populatio.git"
+  },
+  "keywords": [
+    "node",
+    "population",
+    "api",
+    "app"
+  ],
+  "author": "Jean Abayo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/j33n/populatio/issues"
+  },
+  "homepage": "https://github.com/j33n/populatio#readme",
+  "dependencies": {
+    "express": "^4.16.4"
+  }
+}
