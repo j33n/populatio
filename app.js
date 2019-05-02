@@ -3,6 +3,7 @@ const logger = require('morgan');
 
 const app = express()
 const port = process.env.PORT || 3000
+require('dotenv').config();
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -19,6 +20,26 @@ const {
 const {
 	validateLocation
 } = require('./validations');
+
+// Connect to DB
+// Import the mongoose module
+const mongoose = require('mongoose');
+
+// Mongoose connection
+const mongoDB = process.env.DB_NAME;
+
+mongoose.connect(mongoDB, {
+	useNewUrlParser: true,
+});
+
+//Get the default connection
+const db = mongoose.connection;
+
+//Bind connection to error event (to get notification of connection errors)
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.once('open', function() {
+	console.log(`Database connected at ${mongoDB}!!`)
+});
 
 app.get('/', fetchLocations);
 app.post('/', validateLocation, createNewLocation);

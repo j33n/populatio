@@ -2,6 +2,8 @@ const {
 	validationResult
 } = require('express-validator/check');
 
+const Location = require('./models/location');
+
 // GET          Fetch all locations
 // GET          Fetch by genre
 exports.fetchLocations = (req, res) => {
@@ -18,9 +20,25 @@ exports.createNewLocation = (req, res) => {
 			errors: errors.array()
 		});
 	}
-	res.status(201).json({
-		message: 'Location created successfuly'
+	console.log('req.body :', req.body);
+	Location.create({
+		name: req.body.name,
+		male: req.body.male,
+		female: req.body.female,
 	})
+	.then(location => {
+		// TODO: Check location should be nested and nest it in parent location
+		return res.status(201).json({
+			location,
+			message: 'Location created successfuly'
+		})
+	})
+	.catch((err) => res.status(400).json({
+		errors: {
+			plain: 'Unable to save message',
+			detailed: err.message,
+		}
+	}));
 }
 
 // GET          Fetch single location data
