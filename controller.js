@@ -7,9 +7,25 @@ const Location = require('./models/location');
 // GET          Fetch all locations
 // GET          Fetch by genre
 exports.fetchLocations = (req, res) => {
-	res.status(200).json({
-		message: 'Locations retrieved successfuly'
-	})
+	Location.find({}).then((locations) => {
+		if (locations.length > 0) {
+			return res.status(200).json({
+				locations,
+				message: 'Locations retrieved successfuly'
+			})
+		}
+		return res.status(200).json({
+			locations,
+			message: 'No locations recorded yet'
+		})
+	}).catch((error) => {
+		return res.status(400).json({
+			errors: {
+				plain: 'Invalid request',
+				detailed: error.message
+			},
+		});
+	});
 }
 
 // POST         Create a new location
