@@ -20,25 +20,41 @@ exports.createNewLocation = (req, res) => {
 			errors: errors.array()
 		});
 	}
-	console.log('req.body :', req.body);
-	Location.create({
-		name: req.body.name,
-		male: req.body.male,
-		female: req.body.female,
-	})
-	.then(location => {
-		// TODO: Check location should be nested and nest it in parent location
-		return res.status(201).json({
-			location,
-			message: 'Location created successfuly'
+
+	Location.find({
+			name: req.body.name
+		}).then((location) => {
+			if (location.length > 0) {
+				return res.status(422).json({
+					error: 'Location already recorded',
+				});
+			}
+			Location.create({
+					name: req.body.name,
+					male: req.body.male,
+					female: req.body.female,
+				})
+				.then(location => {
+					return res.status(201).json({
+						location,
+						message: 'Location created successfuly'
+					})
+				})
+				.catch((error) => res.status(400).json({
+					errors: {
+						plain: 'Unable to save message',
+						detailed: error.message,
+					}
+				}));
 		})
-	})
-	.catch((err) => res.status(400).json({
-		errors: {
-			plain: 'Unable to save message',
-			detailed: err.message,
-		}
-	}));
+		.catch((error) => {
+			return res.status(400).json({
+				errors: {
+					plain: 'Invalid request',
+					detailed: error.message
+				},
+			});
+		});
 }
 
 // GET          Fetch single location data
