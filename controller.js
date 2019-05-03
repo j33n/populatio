@@ -36,9 +36,9 @@ exports.createNewLocation = (req, res) => {
 			errors: errors.array()
 		});
 	}
-
+	const locationName = req.body.name.charAt(0).toUpperCase() + req.body.name.slice(1);
 	Location.find({
-			name: req.body.name
+			name: locationName
 		}).then((location) => {
 			if (location.length > 0) {
 				return res.status(422).json({
@@ -46,13 +46,13 @@ exports.createNewLocation = (req, res) => {
 				});
 			}
 			Location.create({
-					name: req.body.name,
+					name: locationName,
 					male: req.body.male,
 					female: req.body.female,
 				})
-				.then(location => {
+				.then(createdLocation => {
 					return res.status(201).json({
-						location,
+						createdLocation,
 						message: 'Location created successfuly'
 					})
 				})
@@ -66,7 +66,7 @@ exports.createNewLocation = (req, res) => {
 		.catch((error) => {
 			return res.status(400).json({
 				errors: {
-					plain: 'Invalid request',
+					plain: 'Unable to save message',
 					detailed: error.message
 				},
 			});
@@ -83,9 +83,86 @@ exports.fetchNestedLocation = (req, res) => {
 
 // POST         Create location under location
 exports.createNestedLocation = (req, res) => {
-	res.status(201).json({
-		message: 'Location created successfuly'
-	})
+	const errors = validationResult(req);
+	if (!errors.isEmpty()) {
+		return res.status(422).json({
+			errors: errors.array()
+		});
+	}
+	const formatLocation = (name) => name.charAt(0).toUpperCase() + name.slice(1);
+	const {
+		name,
+		male,
+		female
+	} = req.body;
+	const locationName = formatLocation(name);
+	const parentLocation = formatLocation(req.params.location_name);
+
+	Location.findOne({
+			name: parentLocation
+		}).then((parentLoc) => {
+			if (!parentLoc) {
+				return res.status(422).json({
+					message: `Location ${parentLocation} not found`,
+				})
+			}
+			Location.find({
+					name: locationName
+				}).then((location) => {
+					if (location.length > 0) {
+						return res.status(422).json({
+							error: `Location ${locationName} already recorded`,
+						});
+					}
+					Location.create({
+							name: locationName,
+							male: male,
+							female: female,
+						})
+						.then(locationCreated => {
+							parentLoc.infantLocations.push({
+								locationName
+							})
+							const subdoc = parentLoc.infantLocations[0];
+							subdoc.isNew;
+							parentLoc.save((error) => {
+								return res.status(422).json({
+									errors: {
+										plain: `Unable to save location ${locationName}`,
+										detailed: error.message,
+									}
+								})
+							});
+							return res.status(201).json({
+								locationCreated,
+								message: `Location ${locationName} created under ${parentLocation} successfuly`,
+							})
+						})
+						.catch((error) => res.status(400).json({
+							errors: {
+								plain: 'Unable to save location',
+								detailed: error.message,
+							}
+						}));
+				})
+				.catch((error) => {
+					return res.status(400).json({
+						errors: {
+							plain: 'Unable to save location',
+							detailed: error.message
+						},
+					});
+				});
+
+		})
+		.catch((error) => {
+			return res.status(400).json({
+				errors: {
+					plain: 'Invalid request',
+					detailed: error.message
+				},
+			});
+		});
 }
 
 // PUT          Update location details

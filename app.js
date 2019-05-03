@@ -43,10 +43,10 @@ db.once('open', function() {
 
 app.get('/', fetchLocations);
 app.post('/', validateLocation, createNewLocation);
-app.get('/:location-name', fetchNestedLocation);
-app.post('/:location-name', createNestedLocation);
-app.put('/:location-name', updateLocationDetails);
-app.delete('/:location-name', deleteLocation);
+app.get('/:location_name', fetchNestedLocation);
+app.post('/:location_name', createNestedLocation);
+app.put('/:location_name', updateLocationDetails);
+app.delete('/:location_name', deleteLocation);
 
 
 // catch 404 and forward to error handler

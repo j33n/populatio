@@ -18,12 +18,12 @@ const LocationSchema = new Schema({
 	male: {
 		type: Number,
 		required: true,
-		max: 100,
+		max: 10000000000,
 	},
 	female: {
 		type: Number,
 		required: true,
-		max: 100,
+		max: 10000000000,
 	},
 	infantLocations: [infantLocationSchema],
 });
