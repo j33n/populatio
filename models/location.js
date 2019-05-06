@@ -25,6 +25,11 @@ const LocationSchema = new Schema({
 		required: true,
 		max: 10000000000,
 	},
+	total: {
+		type: Number,
+		required: true,
+		max: 10000000000,
+	},
 	infantLocations: [infantLocationSchema],
 });
 

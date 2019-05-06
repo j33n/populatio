@@ -53,6 +53,7 @@ exports.createNewLocation = (req, res) => {
 					name: locationName,
 					male: req.body.male,
 					female: req.body.female,
+					total: req.body.male + req.body.female,
 				})
 				.then(createdLocation => {
 					return res.status(201).json({
@@ -147,6 +148,7 @@ exports.createNestedLocation = (req, res) => {
 							name: locationName,
 							male: male,
 							female: female,
+							total: male + female,
 						})
 						.then(locationCreated => {
 							parentLoc.infantLocations.push({
