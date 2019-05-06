@@ -155,17 +155,19 @@ exports.createNestedLocation = (req, res) => {
 							const subdoc = parentLoc.infantLocations[0];
 							subdoc.isNew;
 							parentLoc.save((error) => {
-								return res.status(422).json({
-									errors: {
-										plain: `Unable to save location ${locationName}`,
-										detailed: error.message,
-									}
+								if (error) {
+									return res.status(422).json({
+										errors: {
+											plain: `Unable to save location ${locationName}`,
+											detailed: error.message,
+										}
+									})
+								}
+								return res.status(201).json({
+									locationCreated,
+									message: `Location ${locationName} created under ${parentLocation} successfuly`,
 								})
 							});
-							return res.status(201).json({
-								locationCreated,
-								message: `Location ${locationName} created under ${parentLocation} successfuly`,
-							})
 						})
 						.catch((error) => res.status(400).json({
 							errors: {
@@ -247,7 +249,48 @@ exports.updateLocationDetails = (req, res) => {
 
 // DELETE       Delete location and it's details
 exports.deleteLocation = (req, res) => {
-	res.status(200).json({
-		message: 'Location deleted successfuly'
-	})
+	const formattedLocation = formatLocation(req.params.location_name);
+	Location.deleteOne({
+			name: formattedLocation
+		}).then((location) => {
+			if (location.deletedCount === 0) {
+				return res.status(422).json({
+					error: `Unable to delete location ${formattedLocation}`,
+				});
+			}
+			// Delete where the location was nested
+			Location.find({}).then((locations) => {
+				locations.forEach((locationWithNested) => {
+					const childrenLength = locationWithNested.infantLocations.length
+					if (childrenLength > 0) {
+						locationWithNested.infantLocations.find((nestedLocation, index) => {
+							if (nestedLocation.locationName === formattedLocation) {
+								locationWithNested.infantLocations.splice(index, 1);
+								locationWithNested.save((error) => {
+									if (error) {
+										return res.status(422).json({
+											errors: {
+												plain: 'Unable to delete location',
+												detailed: error.message,
+											}
+										})
+									}
+									return res.status(200).json({
+										message: `Location ${formattedLocation} deleted successfuly`,
+									})
+								});
+							}
+						})
+					}
+				});
+			})
+		})
+		.catch((error) => {
+			return res.status(400).json({
+				errors: {
+					plain: 'Invalid request',
+					detailed: error.message
+				},
+			});
+		});
 }
