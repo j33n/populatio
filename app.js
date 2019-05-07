@@ -26,7 +26,8 @@ const {
 const mongoose = require('mongoose');
 
 // Mongoose connection
-const mongoDB = process.env.DB_NAME;
+let mongoDB = process.env.DB_NAME;
+if (process.env.NODE_ENV === "test") mongoDB = process.env.DB_NAME + '_test';
 
 mongoose.connect(mongoDB, {
 	useNewUrlParser: true,
@@ -68,4 +69,8 @@ app.use(function(err, req, res, next) {
 	});
 });
 
-app.listen(port, () => console.log(`App running on port ${port}!`))
+if (!module.parent) {
+	app.listen(port, () => console.log(`App running on port ${port}!`))
+}
+
+module.exports = app

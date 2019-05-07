@@ -16,9 +16,10 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "test": "npm test",
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "test": "cross-env NODE_ENV=test mocha **/**.spec.js --exit",
+    "test-cov": "nyc --exclude 'tests/**' --reporter text --reporter html yarn test"
   },
   "dependencies": {
     "bluebird": "^3.5.4",
@@ -29,7 +30,12 @@
     "morgan": "^1.9.1"
   },
   "devDependencies": {
-    "nodemon": "^1.18.11"
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
+    "cross-env": "^5.2.0",
+    "mocha": "^6.1.4",
+    "nodemon": "^1.18.11",
+    "nyc": "^14.1.0"
   },
   "bugs": {
     "url": "https://github.com/j33n/populatio/issues"

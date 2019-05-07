@@ -169,7 +169,9 @@ exports.createNestedLocation = (req, res) => {
 								let allResidents = male + female;
 								if (parentLoc.infantLocations.length > 0) {
 									parentLoc.infantLocations.forEach((childLocation) => {
-										Location.findOne({ name: childLocation.locationName }).then((singleChildLocation) => {
+										Location.findOne({
+											name: childLocation.locationName
+										}).then((singleChildLocation) => {
 											allResidents = allResidents + singleChildLocation.totalResidents;
 										});
 									});
@@ -232,46 +234,62 @@ exports.updateLocationDetails = (req, res) => {
 			errors: errors.array()
 		});
 	}
-	const locationName = formatLocation(req.body.name);
-	Location.updateOne({
-			name: formattedLocation
-		}, {
-			$set: {
-				name: locationName,
-				male: req.body.male,
-				female: req.body.female,
-			}
-		}).then((location) => {
-			if (location.nModified === 0) {
-				return res.status(422).json({
-					error: `Unable to update location ${formattedLocation}`,
-				});
-			}
-			Location.findOne({
-					name: locationName
-				}).then((updatedLocation) => {
-					return res.status(200).json({
-						location: updatedLocation,
-						message: 'Location updated successfuly'
-					})
-				})
-				.catch((error) => {
-					return res.status(400).json({
-						errors: {
-							plain: 'Invalid request',
-							detailed: error.message
-						},
-					});
-				});
-		})
-		.catch((error) => {
-			return res.status(400).json({
-				errors: {
-					plain: 'Invalid request',
-					detailed: error.message
-				},
+	const {
+		name,
+		male,
+		female
+	} = req.body;
+	const locationName = formatLocation(name);
+	Location.findOne({
+		name: formattedLocation
+	}).then((locationToUpdate) => {
+		if (!locationToUpdate) {
+			return res.status(422).json({
+				error: `Location ${formattedLocation} not found in our records`,
 			});
-		});
+		}
+		const totalResidents = locationToUpdate.infantLocations.length > 0 ? locationToUpdate.totalResidents : male + female;
+		Location.updateOne({
+				name: formattedLocation
+			}, {
+				$set: {
+					name: locationName,
+					male: male,
+					female: female,
+					totalResidents,
+				}
+			}).then((location) => {
+				if (location.nModified === 0) {
+					return res.status(422).json({
+						error: `Unable to update location ${formattedLocation}`,
+					});
+				}
+				Location.findOne({
+						name: locationName
+					}).then((updatedLocation) => {
+						return res.status(200).json({
+							location: updatedLocation,
+							message: 'Location updated successfuly'
+						})
+					})
+					.catch((error) => {
+						return res.status(400).json({
+							errors: {
+								plain: 'Invalid request',
+								detailed: error.message
+							},
+						});
+					});
+			})
+			.catch((error) => {
+				return res.status(400).json({
+					errors: {
+						plain: 'Invalid request',
+						detailed: error.message
+					},
+				});
+			});
+	})
 }
 
 // DELETE       Delete location and it's details
