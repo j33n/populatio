@@ -10,8 +10,10 @@ chai.use(chaiHttp);
 chai.should();
 
 describe("Location", () => {
+	let location;
+	let childLocation;
+	// Create a parent location
 	beforeEach((done) => {
-		// Create our Adam user 😆
 		chai.request(app)
 			.post('/')
 			.send({
@@ -22,6 +24,39 @@ describe("Location", () => {
 			.end((err, res) => {
 				if (err) throw err;
 				location = res.body.location;
+				done();
+			});
+	});
+
+	// Create a child location under the parent above
+	beforeEach((done) => {
+		chai.request(app)
+			.post('/Nigeria')
+			.send({
+				name: 'Abidjan',
+				male: 23,
+				female: 20
+			})
+			.end((err, res) => {
+				if (err) throw err;
+				childLocation = res.body.location;
+				done();
+			});
+	});
+
+	// Create a second nested location
+	// to test whether stats are added once a nested location is added 😄
+	beforeEach((done) => {
+		chai.request(app)
+			.post('/Nigeria')
+			.send({
+				name: 'Port Louis',
+				male: 50,
+				female: 50
+			})
+			.end((err, res) => {
+				if (err) throw err;
+				childLocation = res.body.location;
 				done();
 			});
 	});
@@ -64,7 +99,7 @@ describe("Location", () => {
 					name: 'Kenya',
 					male: 1000,
 					female: 10000,
-					totalResidents: 11000,
+					totalResidents: 143,
 				});
 				done();
 			});
@@ -103,6 +138,30 @@ describe("Location", () => {
 				res.body.should.be.a('object');
 				expect(res.body).to.deep.include({
 					message: 'Location X-location not found'
+				});
+				done();
+			});
+	});
+
+	it('should create location under another location', (done) => {
+		chai.request(app)
+			.post('/Nigeria')
+			.send({
+				name: 'Lagos',
+				male: 1000,
+				female: 10000
+			})
+			.end((err, res) => {
+				if (err) throw err;
+				res.should.have.status(201);
+				res.body.should.be.a('object');
+				expect(res.body).to.deep.include({
+					message: 'Location Lagos created under Nigeria successfuly'
+				});
+				expect(res.body).to.have.property('location').to.deep.include({
+					name: 'Lagos',
+					male: 1000,
+					female: 10000
 				});
 				done();
 			});

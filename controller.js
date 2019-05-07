@@ -151,9 +151,31 @@ exports.createNestedLocation = (req, res) => {
 							totalResidents: male + female,
 						})
 						.then(locationCreated => {
+							const childLocations = [];
+							if (parentLoc.infantLocations.length > 0) {
+								parentLoc.infantLocations.forEach((childLocation) => {
+									childLocations.push(Location.findOne({
+										name: childLocation.locationName
+									}))
+								});
+								return Promise.all(childLocations);
+							}
+							return Promise.all(childLocations);
+						})
+						.then((childLocations) => {
+							let totalResidents = male + female;
+							let totalMale = male
+							let totalFemale = female
+							if (childLocations.length > 0) {
+								childLocations.forEach((singleChildLocation) => {
+									totalResidents += singleChildLocation.totalResidents;
+									totalMale += singleChildLocation.male;
+									totalFemale += singleChildLocation.female;
+								});
+							}
 							parentLoc.infantLocations.push({
 								locationName
-							})
+							});
 							const subdoc = parentLoc.infantLocations[0];
 							subdoc.isNew;
 							parentLoc.save((error) => {
@@ -165,25 +187,14 @@ exports.createNestedLocation = (req, res) => {
 										}
 									})
 								}
-
-								let allResidents = male + female;
-								if (parentLoc.infantLocations.length > 0) {
-									parentLoc.infantLocations.forEach((childLocation) => {
-										Location.findOne({
-											name: childLocation.locationName
-										}).then((singleChildLocation) => {
-											allResidents = allResidents + singleChildLocation.totalResidents;
-										});
-									});
-								}
-								console.log('allResidents', allResidents);
-								// parentLoc.infantLocations.length === 0 ? total: male + female : total
 								// Add up all residents within nested location
 								Location.updateOne({
 									name: parentLocation
 								}, {
 									$set: {
-										totalResidents: allResidents,
+										male: totalMale,
+										female: totalFemale,
+										totalResidents,
 									}
 								}).then((updatedLocation) => {
 									if (updatedLocation.nModified === 0) {
@@ -192,8 +203,13 @@ exports.createNestedLocation = (req, res) => {
 										})
 									}
 									return res.status(201).json({
-										locationCreated,
+										location: {
+											name: locationName,
+											male: male,
+											female: female,
+										},
 										message: `Location ${locationName} created under ${parentLocation} successfuly`,
+										totalResidents: `${parentLocation} now has ${totalResidents} people`,
 									})
 								})
 							});
@@ -315,7 +331,7 @@ exports.deleteLocation = (req, res) => {
 									if (error) {
 										return res.status(422).json({
 											errors: {
-												plain: 'Unable to delete location',
+												plain: 'Unable to delete location where it was nested',
 												detailed: error.message,
 											}
 										})
@@ -328,6 +344,9 @@ exports.deleteLocation = (req, res) => {
 						})
 					}
 				});
+				return res.status(200).json({
+					message: `Location ${formattedLocation} deleted successfuly`,
+				})
 			})
 		})
 		.catch((error) => {
