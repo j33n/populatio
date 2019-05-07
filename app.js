@@ -26,8 +26,8 @@ const {
 const mongoose = require('mongoose');
 
 // Mongoose connection
-let mongoDB = process.env.DB_NAME;
-if (process.env.NODE_ENV === "test") mongoDB = process.env.DB_NAME + '_test';
+let mongoDB = process.env.MONGODB_URI;
+if (process.env.NODE_ENV === "test") mongoDB = process.env.MONGODB_URI + '_test';
 
 mongoose.connect(mongoDB, {
 	useNewUrlParser: true,
