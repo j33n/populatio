@@ -53,11 +53,11 @@ exports.createNewLocation = (req, res) => {
 					name: locationName,
 					male: req.body.male,
 					female: req.body.female,
-					total: req.body.male + req.body.female,
+					totalResidents: req.body.male + req.body.female,
 				})
 				.then(createdLocation => {
 					return res.status(201).json({
-						createdLocation,
+						location: createdLocation,
 						message: 'Location created successfuly'
 					})
 				})
@@ -148,7 +148,7 @@ exports.createNestedLocation = (req, res) => {
 							name: locationName,
 							male: male,
 							female: female,
-							total: male + female,
+							totalResidents: male + female,
 						})
 						.then(locationCreated => {
 							parentLoc.infantLocations.push({
@@ -160,14 +160,39 @@ exports.createNestedLocation = (req, res) => {
 								if (error) {
 									return res.status(422).json({
 										errors: {
-											plain: `Unable to save location ${locationName}`,
+											plain: `Location saved but unable to save ${locationName} as nested location`,
 											detailed: error.message,
 										}
 									})
 								}
-								return res.status(201).json({
-									locationCreated,
-									message: `Location ${locationName} created under ${parentLocation} successfuly`,
+
+								let allResidents = male + female;
+								if (parentLoc.infantLocations.length > 0) {
+									parentLoc.infantLocations.forEach((childLocation) => {
+										Location.findOne({ name: childLocation.locationName }).then((singleChildLocation) => {
+											allResidents = allResidents + singleChildLocation.totalResidents;
+										});
+									});
+								}
+								console.log('allResidents', allResidents);
+								// parentLoc.infantLocations.length === 0 ? total: male + female : total
+								// Add up all residents within nested location
+								Location.updateOne({
+									name: parentLocation
+								}, {
+									$set: {
+										totalResidents: allResidents,
+									}
+								}).then((updatedLocation) => {
+									if (updatedLocation.nModified === 0) {
+										return res.status(422).json({
+											message: `Location ${locationName} created but couldn't update the total successfully`,
+										})
+									}
+									return res.status(201).json({
+										locationCreated,
+										message: `Location ${locationName} created under ${parentLocation} successfuly`,
+									})
 								})
 							});
 						})

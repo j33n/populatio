@@ -25,7 +25,7 @@ const LocationSchema = new Schema({
 		required: true,
 		max: 10000000000,
 	},
-	total: {
+	totalResidents: {
 		type: Number,
 		required: true,
 		max: 10000000000,
