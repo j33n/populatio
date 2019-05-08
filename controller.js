@@ -162,15 +162,17 @@ exports.createNestedLocation = (req, res) => {
 							}
 							return Promise.all(childLocations);
 						})
-						.then((childLocations) => {
+						.then((allChildLocations) => {
 							let totalResidents = male + female;
 							let totalMale = male
 							let totalFemale = female
-							if (childLocations.length > 0) {
-								childLocations.forEach((singleChildLocation) => {
-									totalResidents += singleChildLocation.totalResidents;
-									totalMale += singleChildLocation.male;
-									totalFemale += singleChildLocation.female;
+							if (allChildLocations.length > 0) {
+								allChildLocations.forEach((singleChildLocation) => {
+									if (singleChildLocation) {
+										totalResidents += singleChildLocation.totalResidents;
+										totalMale += singleChildLocation.male;
+										totalFemale += singleChildLocation.female;
+									}
 								});
 							}
 							parentLoc.infantLocations.push({
@@ -178,14 +180,11 @@ exports.createNestedLocation = (req, res) => {
 							});
 							const subdoc = parentLoc.infantLocations[0];
 							subdoc.isNew;
-							parentLoc.save((error) => {
+							parentLoc.save((error, locationSaved) => {
 								if (error) {
 									return res.status(422).json({
-										errors: {
-											plain: `Location saved but unable to save ${locationName} as nested location`,
-											detailed: error.message,
-										}
-									})
+										error: `Location saved but unable to save ${locationName} as nested location`,
+									});
 								}
 								// Add up all residents within nested location
 								Location.updateOne({
@@ -197,7 +196,7 @@ exports.createNestedLocation = (req, res) => {
 										totalResidents,
 									}
 								}).then((updatedLocation) => {
-									if (updatedLocation.nModified === 0) {
+									if (updatedLocation.nModified === 0 && updatedLocation.n === 0) {
 										return res.status(422).json({
 											message: `Location ${locationName} created but couldn't update the total successfully`,
 										})
@@ -283,9 +282,33 @@ exports.updateLocationDetails = (req, res) => {
 				Location.findOne({
 						name: locationName
 					}).then((updatedLocation) => {
-						return res.status(200).json({
-							location: updatedLocation,
-							message: 'Location updated successfuly'
+						// Find if location had a parent to update details in Parent too
+						Location.find({}).then((allLocations) => {
+							if (allLocations.length > 0) {
+								allLocations.forEach((singleLocation) => {
+									singleLocation.infantLocations.find((nestedLocation, index) => {
+										if (nestedLocation && nestedLocation.locationName === formattedLocation) {
+											singleLocation.infantLocations.splice(index, 1, {
+												locationName
+											});
+											singleLocation.save((error) => {
+												if (error) {
+													return res.status(422).json({
+														errors: {
+															plain: 'Unable to update location where it was nested',
+															detailed: error.message,
+														}
+													})
+												}
+											});
+										}
+									})
+								});
+							}
+							return res.status(200).json({
+								location: updatedLocation,
+								message: 'Location updated successfuly'
+							})
 						})
 					})
 					.catch((error) => {
@@ -325,7 +348,7 @@ exports.deleteLocation = (req, res) => {
 					const childrenLength = locationWithNested.infantLocations.length
 					if (childrenLength > 0) {
 						locationWithNested.infantLocations.find((nestedLocation, index) => {
-							if (nestedLocation.locationName === formattedLocation) {
+							if (nestedLocation && nestedLocation.locationName === formattedLocation) {
 								locationWithNested.infantLocations.splice(index, 1);
 								locationWithNested.save((error) => {
 									if (error) {
@@ -336,9 +359,6 @@ exports.deleteLocation = (req, res) => {
 											}
 										})
 									}
-									return res.status(200).json({
-										message: `Location ${formattedLocation} deleted successfuly`,
-									})
 								});
 							}
 						})
