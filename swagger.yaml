@@ -1,0 +1,170 @@
+swagger: '2.0'
+info:
+  description: An api to manage your population
+  version: 1.0.0
+  title: Populatio
+  # put the contact info for your development or API team
+  contact:
+    email: abagammy@gmail.com
+
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+
+host: populatio.herokuapp.com
+basePath: /
+schemes:
+  - https
+
+paths:
+  /:
+    get:
+      summary: retrieves all locations
+      operationId: fetchLocations
+      description: |
+        By hitting this endpoint you are requesting to fetch all locations and their associated details
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Locations fetched successfully
+        422:
+          description: No locations recorded yet
+        400:
+          description: Invalid request
+    post:
+      summary: create a location
+      operationId: createLocation
+      description: Adds a location in our records
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: location
+        description: Location to be added
+        required: true
+        schema:
+          $ref: '#/definitions/Location'
+      responses:
+        201:
+          description: Location created successfuly
+        400:
+          description: Unable to save location
+        422:
+          description: Location already exists
+  /{locationName}:
+    get:
+      summary: retrieves all locations within another location
+      parameters:
+        - in: path
+          name: locationName
+          type: string
+          required: true
+          description: location name you want to get it's records
+      operationId: fetchNestedLocations
+      description: |
+        Fetch all locations nested within another location
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Locations fetched successfully
+        422:
+          description: No locations recorded yet
+        400:
+          description: Invalid request
+    post:
+      summary: create a nested location
+      operationId: createNestedLocation
+      description: Adds a location under another location
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: locationName
+        type: string
+        required: true
+        description: location name you want to be a parent location
+      - in: body
+        name: location
+        description: Location to be added
+        required: true
+        schema:
+          $ref: '#/definitions/Location'
+      responses:
+        201:
+          description: Location created successfuly
+        400:
+          description: Unable to save location
+        422:
+          description: Location already exists
+    put:
+      summary: update a certain location
+      operationId: updateLocation
+      description: Update location details
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: locationName
+        type: string
+        required: true
+        description: location name you want to update
+      - in: body
+        name: location
+        description: Location details to be updated
+        required: true
+        schema:
+          $ref: '#/definitions/Location'
+      responses:
+        200:
+          description: Location updated successfuly
+        400:
+          description: Unable to update location
+        422:
+          description: Location not found
+    delete:
+      summary: delete a certain location
+      operationId: deleteLocation
+      description: Delete location and it's details
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: locationName
+        type: string
+        required: true
+        description: location name you want to delete
+      responses:
+        200:
+          description: Location deleted successfuly
+        400:
+          description: Unable to delete location
+        422:
+          description: Location not found
+  
+definitions:
+  Location:
+    type: object
+    required:
+    - name
+    - male
+    - female
+    properties:
+      name:
+        type: string
+        example: Nairobi
+      male:
+        type: number
+        example: 100
+      female:
+        type: number
+        example: 100

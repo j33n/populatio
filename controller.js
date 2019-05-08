@@ -18,7 +18,7 @@ exports.fetchLocations = (req, res) => {
 				message: 'Locations retrieved successfuly'
 			})
 		}
-		return res.status(200).json({
+		return res.status(422).json({
 			locations,
 			message: 'No locations recorded yet'
 		})
@@ -63,7 +63,7 @@ exports.createNewLocation = (req, res) => {
 				})
 				.catch((error) => res.status(400).json({
 					errors: {
-						plain: 'Unable to save message',
+						plain: 'Unable to save location',
 						detailed: error.message,
 					}
 				}));
@@ -71,7 +71,7 @@ exports.createNewLocation = (req, res) => {
 		.catch((error) => {
 			return res.status(400).json({
 				errors: {
-					plain: 'Unable to save message',
+					plain: 'Unable to save location',
 					detailed: error.message
 				},
 			});

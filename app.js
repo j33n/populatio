@@ -1,5 +1,9 @@
 const express = require('express')
 const logger = require('morgan');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const YAML = require('yamljs');
+const swaggerUi = require('swagger-ui-express');
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -7,19 +11,12 @@ require('dotenv').config();
 
 app.use(logger('dev'));
 app.use(express.json());
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
 
-const {
-	fetchLocations,
-	createNewLocation,
-	fetchNestedLocation,
-	createNestedLocation,
-	updateLocationDetails,
-	deleteLocation,
-} = require('./controller');
+const swaggerDocument = YAML.load('./swagger.yaml');
 
-const {
-	validateLocation
-} = require('./validations');
+const locationRouter = require('./locationRouter');
 
 // Connect to DB
 // Import the mongoose module
@@ -42,13 +39,10 @@ db.once('open', function() {
 	console.log(`Database connected at ${mongoDB}!!`)
 });
 
-app.get('/', fetchLocations);
-app.post('/', validateLocation, createNewLocation);
-app.get('/:location_name', fetchNestedLocation);
-app.post('/:location_name', createNestedLocation);
-app.put('/:location_name', updateLocationDetails);
-app.delete('/:location_name', deleteLocation);
-
+// Documentation routing
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// All routes live here
+app.use('/', locationRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
